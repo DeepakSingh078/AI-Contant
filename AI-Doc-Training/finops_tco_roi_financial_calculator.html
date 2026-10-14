@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI FinOps, TCO & ROI Financial Calculator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Lato', 'sans-serif'],
+                        heading: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#10b981',
+                            600: '#059669',
+                            800: '#065f46',
+                            900: '#022c22',
+                        },
+                        indigoBrand: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Lato', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        h1, h2, h3, h4 { font-family: 'Poppins', sans-serif; }
+        input[type="range"] { accent-color: #4f46e5; }
+        .tab-btn.active {
+            border-bottom: 3px solid #6366f1;
+            color: #818cf8;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Header Navigation -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-indigo-600 rounded-lg text-white font-bold text-xl">
+                    <i class="fa-solid fa-calculator"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-tight">Enterprise AI FinOps &amp; TCO Calculator</h1>
+                    <p class="text-xs text-slate-400">AI for Technical Architects • Day 4 Financial Modeling Workbench</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="resetDefaults()" class="px-3.5 py-1.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-md transition border border-slate-700">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset Defaults
+                </button>
+                <button onclick="exportToCSV()" class="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-md transition shadow-md flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-excel"></i> Export Model (CSV)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-6 mt-8">
+
+        <!-- Top Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 text-slate-800 text-6xl font-black pointer-events-none"><i class="fa-solid fa-sack-dollar"></i></div>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Unoptimized Monthly Cost</p>
+                <h3 id="card-unoptimized-monthly" class="text-2xl font-bold text-red-400 mt-2">$0</h3>
+                <p class="text-xs text-slate-500 mt-1">100% Tier 1 LLM Direct Invocations</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 text-slate-800 text-6xl font-black pointer-events-none"><i class="fa-solid fa-piggy-bank"></i></div>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Optimized Monthly TCO</p>
+                <h3 id="card-optimized-monthly" class="text-2xl font-bold text-emerald-400 mt-2">$0</h3>
+                <p class="text-xs text-slate-400 mt-1">Token + Infrastructure + Guardrails</p>
+            </div>
+
+            <div class="bg-slate-900 border border-indigo-900/50 rounded-xl p-5 shadow-lg relative overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950/40">
+                <div class="absolute -right-4 -bottom-4 text-indigo-900/30 text-6xl font-black pointer-events-none"><i class="fa-solid fa-percent"></i></div>
+                <p class="text-xs font-semibold text-indigo-300 uppercase tracking-wider">Net Monthly Cost Reduction</p>
+                <h3 id="card-cost-reduction-pct" class="text-2xl font-bold text-indigo-400 mt-2">0%</h3>
+                <p id="card-monthly-savings" class="text-xs text-emerald-400 mt-1">Saves $0 / month</p>
+            </div>
+
+            <div class="bg-slate-900 border border-emerald-900/50 rounded-xl p-5 shadow-lg relative overflow-hidden bg-gradient-to-br from-slate-900 to-emerald-950/40">
+                <div class="absolute -right-4 -bottom-4 text-emerald-900/30 text-6xl font-black pointer-events-none"><i class="fa-solid fa-chart-line"></i></div>
+                <p class="text-xs font-semibold text-emerald-300 uppercase tracking-wider">3-Year ROI %</p>
+                <h3 id="card-3yr-roi" class="text-2xl font-bold text-emerald-300 mt-2">0%</h3>
+                <p id="card-payback-months" class="text-xs text-slate-300 mt-1">Payback: 0.0 Months</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-slate-800 mb-8 overflow-x-auto">
+            <button onclick="switchTab('tab-finops')" id="btn-tab-finops" class="tab-btn active px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+                <i class="fa-solid fa-coins"></i> 1. Token Economics &amp; Router
+            </button>
+            <button onclick="switchTab('tab-infra')" id="btn-tab-infra" class="tab-btn px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+                <i class="fa-solid fa-server"></i> 2. Infrastructure &amp; Operational TCO
+            </button>
+            <button onclick="switchTab('tab-roi')" id="btn-tab-roi" class="tab-btn px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie"></i> 3. ROI &amp; Manual Baseline
+            </button>
+            <button onclick="switchTab('tab-excel')" id="btn-tab-excel" class="tab-btn px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white transition flex items-center gap-2">
+                <i class="fa-solid fa-table"></i> 4. Excel Formula Matrix
+            </button>
+        </div>
+
+        <!-- TAB 1: TOKEN ECONOMICS & ROUTER -->
+        <div id="tab-finops" class="tab-content block">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Inputs Column -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-indigo-400"></i> Workload &amp; Token Volume Profile
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Monthly Transactions</label>
+                                <input type="number" id="inp-tx-volume" value="1000000" step="50000" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <span class="text-[11px] text-slate-500">e.g., 1,000,000 claims or tickets / month</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Avg. Agent Steps / Tx</label>
+                                <input type="number" id="inp-agent-steps" value="3.5" step="0.5" min="1" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <span class="text-[11px] text-slate-500">Multi-agent tool invocation loops</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Avg Input Tokens / Step</label>
+                                <input type="number" id="inp-input-tokens" value="1200" step="50" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <span class="text-[11px] text-slate-500">Uncompressed prompt size</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Avg Output Tokens / Step</label>
+                                <input type="number" id="inp-output-tokens" value="300" step="25" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <span class="text-[11px] text-slate-500">Generated LLM completion</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i> FinOps Optimization Levers
+                        </h3>
+                        <div class="space-y-5">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-xs font-semibold text-slate-300">Prompt Compression Ratio (% Reduction)</label>
+                                    <span id="lbl-compression-pct" class="text-xs font-bold text-emerald-400">30%</span>
+                                </div>
+                                <input type="range" id="slider-compression" min="0" max="60" value="30" oninput="calculateModel()" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                                <p class="text-[11px] text-slate-500 mt-1">Trims stop-words, whitespace, and applies summary pruning before API egress.</p>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-xs font-semibold text-slate-300">Multi-Tier Semantic Cache Hit Rate (%)</label>
+                                    <span id="lbl-cache-hit-pct" class="text-xs font-bold text-indigo-400">35%</span>
+                                </div>
+                                <input type="range" id="slider-cache-hit" min="0" max="70" value="35" oninput="calculateModel()" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                                <p class="text-[11px] text-slate-500 mt-1">L1 Exact Key Hash + L2 Vector Cosine Similarity (&ge; 0.92) hits incur $0 LLM cost.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-network-wired text-amber-400"></i> Dynamic Model Router Distribution
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-12 gap-3 items-center">
+                                <div class="col-span-4">
+                                    <span class="text-xs font-semibold text-slate-300 block">Tier 1: Frontier</span>
+                                    <span class="text-[10px] text-slate-500">GPT-4o / Sonnet</span>
+                                </div>
+                                <div class="col-span-4">
+                                    <input type="number" id="inp-t1-share" value="20" min="0" max="100" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">% of Non-Cached</span>
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" id="inp-t1-cost-in" value="2.50" step="0.10" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">$/1M In</span>
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" id="inp-t1-cost-out" value="10.00" step="0.50" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">$/1M Out</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-3 items-center">
+                                <div class="col-span-4">
+                                    <span class="text-xs font-semibold text-slate-300 block">Tier 2: Mid Utility</span>
+                                    <span class="text-[10px] text-slate-500">GPT-4o-mini / Haiku</span>
+                                </div>
+                                <div class="col-span-4">
+                                    <input type="number" id="inp-t2-share" value="50" min="0" max="100" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">% of Non-Cached</span>
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" id="inp-t2-cost-in" value="0.15" step="0.01" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">$/1M In</span>
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" id="inp-t2-cost-out" value="0.60" step="0.05" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">$/1M Out</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-12 gap-3 items-center">
+                                <div class="col-span-4">
+                                    <span class="text-xs font-semibold text-slate-300 block">Tier 3: Local SLM</span>
+                                    <span class="text-[10px] text-slate-500">Llama 3.3 8B / Phi-4</span>
+                                </div>
+                                <div class="col-span-4">
+                                    <input type="number" id="inp-t3-share" value="30" min="0" max="100" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">% of Non-Cached</span>
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" id="inp-t3-cost-in" value="0.02" step="0.01" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">$/1M In</span>
+                                </div>
+                                <div class="col-span-2">
+                                    <input type="number" id="inp-t3-cost-out" value="0.05" step="0.01" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <span class="text-[10px] text-slate-500">$/1M Out</span>
+                                </div>
+                            </div>
+
+                            <div id="router-share-warning" class="hidden p-2 bg-red-950/50 border border-red-800 rounded text-[11px] text-red-300">
+                                Warning: Total router allocation shares must sum to 100%. (Current: <span id="lbl-share-sum">0</span>%)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Outputs / Visuals Column -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4">Monthly Token Cost Comparison</h3>
+                        <div class="h-64">
+                            <canvas id="chart-token-cost"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md space-y-3">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider text-slate-400">Token FinOps Metrics</h3>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">Total Monthly Token Requests:</span>
+                            <span id="res-total-requests" class="font-bold text-white">0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">Monthly Cache Hit Requests:</span>
+                            <span id="res-cache-requests" class="font-bold text-indigo-400">0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">Uncompressed Input Tokens:</span>
+                            <span id="res-uncompressed-tokens" class="font-bold text-slate-300">0 M</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">Compressed Input Tokens:</span>
+                            <span id="res-compressed-tokens" class="font-bold text-emerald-400">0 M</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">Unoptimized LLM Bill:</span>
+                            <span id="res-unoptimized-bill" class="font-bold text-red-400">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 text-xs">
+                            <span class="text-slate-400">Optimized LLM Bill:</span>
+                            <span id="res-optimized-bill" class="font-bold text-emerald-400">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: INFRASTRUCTURE & OPERATIONAL TCO -->
+        <div id="tab-infra" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-server text-indigo-400"></i> Vector DB &amp; Caching Compute Infrastructure
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Redis Cluster / L1/L2 Cache ($/mo)</label>
+                                <input type="number" id="inp-infra-redis" value="1200" step="100" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                                <span class="text-[11px] text-slate-500">Multi-AZ HA MemoryStore / Elasticache</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Vector DB Hosting ($/mo)</label>
+                                <input type="number" id="inp-infra-vectordb" value="2500" step="200" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                                <span class="text-[11px] text-slate-500">Pinecone / Milvus / Qdrant Dedicated cluster</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-amber-400"></i> Governance, Guardrails &amp; Operations
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Security Guardrails API ($/1M calls)</label>
+                                <input type="number" id="inp-cost-guardrail-unit" value="0.10" step="0.02" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                                <span class="text-[11px] text-slate-500">LlamaGuard / NeMo / PII Classifier costs</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">CI/CD/CT &amp; Evals Platform ($/mo)</label>
+                                <input type="number" id="inp-infra-evals" value="1500" step="100" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                                <span class="text-[11px] text-slate-500">Arize / Braintrust / LangSmith monitoring</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Human-in-the-Loop Exception Rate (%)</label>
+                                <input type="number" id="inp-hitl-pct" value="2.5" step="0.5" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                                <span class="text-[11px] text-slate-500">% of transactions requiring supervisor audit</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Manual HITL Review Cost ($/item)</label>
+                                <input type="number" id="inp-hitl-unit-cost" value="4.50" step="0.50" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                                <span class="text-[11px] text-slate-500">Operator review cost per flagged claim</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4">Monthly TCO Cost Breakdown</h3>
+                        <div class="h-64">
+                            <canvas id="chart-tco-doughnut"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md space-y-3">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider text-slate-400">Monthly TCO Summary</h3>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">Optimized Token Inference:</span>
+                            <span id="res-tco-tokens" class="font-bold text-slate-300">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">Vector DB &amp; Cache Compute:</span>
+                            <span id="res-tco-compute" class="font-bold text-slate-300">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">Guardrails &amp; Evals:</span>
+                            <span id="res-tco-guardrails" class="font-bold text-slate-300">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-800 text-xs">
+                            <span class="text-slate-400">HITL Operations Expense:</span>
+                            <span id="res-tco-hitl" class="font-bold text-slate-300">$0</span>
+                        </div>
+                        <div class="flex justify-between py-2 text-sm font-bold border-t border-slate-700">
+                            <span class="text-white">Total Monthly TCO:</span>
+                            <span id="res-tco-total-monthly" class="text-emerald-400">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: ROI & MANUAL BASELINE -->
+        <div id="tab-roi" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-briefcase text-indigo-400"></i> Legacy Manual Process Baseline
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Manual Cost / Transaction ($)</label>
+                                <input type="number" id="inp-manual-unit-cost" value="18.50" step="0.50" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                                <span class="text-[11px] text-slate-500">Fully burdened labor cost per ticket/claim</span>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Initial AI Implementation CapEx ($)</label>
+                                <input type="number" id="inp-capex" value="250000" step="10000" oninput="calculateModel()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                                <span class="text-[11px] text-slate-500">Upfront engineering &amp; architecture setup</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md">
+                        <h3 class="text-base font-bold text-white mb-4">3-Year Financial Comparison</h3>
+                        <div class="h-64">
+                            <canvas id="chart-3yr-comparison"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md space-y-4">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider text-slate-400">Executive ROI Metrics</h3>
+                        
+                        <div class="p-4 bg-slate-800/60 rounded-lg border border-slate-700/60">
+                            <span class="text-xs text-slate-400 block">3-Year Net Savings (vs Manual)</span>
+                            <span id="res-3yr-net-savings" class="text-2xl font-bold text-emerald-400">$0</span>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/60 rounded-lg border border-slate-700/60">
+                            <span class="text-xs text-slate-400 block">3-Year Return on Investment (ROI)</span>
+                            <span id="res-3yr-roi-pct" class="text-2xl font-bold text-indigo-400">0%</span>
+                        </div>
+
+                        <div class="p-4 bg-slate-800/60 rounded-lg border border-slate-700/60">
+                            <span class="text-xs text-slate-400 block">Payback Period</span>
+                            <span id="res-payback-months-detail" class="text-2xl font-bold text-amber-400">0 Months</span>
+                        </div>
+
+                        <div class="pt-2 text-xs text-slate-400 space-y-1">
+                            <div class="flex justify-between"><span>Annual Manual Cost:</span><span id="res-annual-manual" class="font-bold text-slate-300">$0</span></div>
+                            <div class="flex justify-between"><span>Annual Optimized AI TCO:</span><span id="res-annual-ai-tco" class="font-bold text-slate-300">$0</span></div>
+                            <div class="flex justify-between"><span>Unit Cost per AI Tx:</span><span id="res-unit-cost-ai" class="font-bold text-emerald-400">$0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: EXCEL FORMULA MATRIX -->
+        <div id="tab-excel" class="tab-content hidden">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-md space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-1">Enterprise Excel Model &amp; Formula Reference Sheet</h3>
+                    <p class="text-xs text-slate-400">Learners can copy these explicit cell formulas directly into Microsoft Excel or Google Sheets to build their Capstone financial models.</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-slate-300 font-semibold border-b border-slate-700">
+                                <th class="p-3">Cell</th>
+                                <th class="p-3">Parameter / Variable Name</th>
+                                <th class="p-3">Excel Cell Formula</th>
+                                <th class="p-3">Current Calculated Value</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300 font-mono">
+                            <tr>
+                                <td class="p-3 text-indigo-400">B4</td>
+                                <td class="p-3 font-sans">Monthly Transactions ($N$)</td>
+                                <td class="p-3 text-slate-500">INPUT</td>
+                                <td id="cell-val-b4" class="p-3 font-bold text-white">1,000,000</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">B5</td>
+                                <td class="p-3 font-sans">Avg Agent Steps / Tx ($S$)</td>
+                                <td class="p-3 text-slate-500">INPUT</td>
+                                <td id="cell-val-b5" class="p-3 font-bold text-white">3.5</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">B6</td>
+                                <td class="p-3 font-sans">Total Monthly Agent Requests</td>
+                                <td class="p-3 text-emerald-400">=B4 * B5</td>
+                                <td id="cell-val-b6" class="p-3 font-bold text-emerald-300">3,500,000</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">B10</td>
+                                <td class="p-3 font-sans">Prompt Compression Ratio</td>
+                                <td class="p-3 text-slate-500">INPUT</td>
+                                <td id="cell-val-b10" class="p-3 font-bold text-white">30%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">B11</td>
+                                <td class="p-3 font-sans">Semantic Cache Hit Rate ($P_{cache}$)</td>
+                                <td class="p-3 text-slate-500">INPUT</td>
+                                <td id="cell-val-b11" class="p-3 font-bold text-white">35%</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">C15</td>
+                                <td class="p-3 font-sans">Unoptimized Monthly Token Bill</td>
+                                <td class="p-3 text-emerald-400">=B6 * ((B7/1000000*2.50) + (B8/1000000*10.00))</td>
+                                <td id="cell-val-c15" class="p-3 font-bold text-red-400">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">C16</td>
+                                <td class="p-3 font-sans">Optimized Monthly Token Bill</td>
+                                <td class="p-3 text-emerald-400">=(B6*(1-B11)) * (((B7*(1-B10))/1000000*W_IN) + (B8/1000000*W_OUT))</td>
+                                <td id="cell-val-c16" class="p-3 font-bold text-emerald-400">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">C22</td>
+                                <td class="p-3 font-sans">Monthly Infrastructure &amp; Guardrail Cost</td>
+                                <td class="p-3 text-emerald-400">=B18 + B19 + (B6/1000000*B20) + B21</td>
+                                <td id="cell-val-c22" class="p-3 font-bold text-white">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">C25</td>
+                                <td class="p-3 font-sans">Total Monthly Optimized TCO</td>
+                                <td class="p-3 text-emerald-400">=C16 + C22 + (B4 * B23 * B24)</td>
+                                <td id="cell-val-c25" class="p-3 font-bold text-emerald-300">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-indigo-400">C30</td>
+                                <td class="p-3 font-sans">3-Year Return on Investment (ROI)</td>
+                                <td class="p-3 text-emerald-400">=(((B4*B28*36) - (C25*36) - B29) / B29) * 100</td>
+                                <td id="cell-val-c30" class="p-3 font-bold text-indigo-300">0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Calculation Engine & Chart Scripts -->
+    <script>
+        let tokenChart, tcoChart, comparisonChart;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(tabId).classList.add('block');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        function resetDefaults() {
+            document.getElementById('inp-tx-volume').value = 1000000;
+            document.getElementById('inp-agent-steps').value = 3.5;
+            document.getElementById('inp-input-tokens').value = 1200;
+            document.getElementById('inp-output-tokens').value = 300;
+
+            document.getElementById('slider-compression').value = 30;
+            document.getElementById('slider-cache-hit').value = 35;
+
+            document.getElementById('inp-t1-share').value = 20;
+            document.getElementById('inp-t1-cost-in').value = 2.50;
+            document.getElementById('inp-t1-cost-out').value = 10.00;
+
+            document.getElementById('inp-t2-share').value = 50;
+            document.getElementById('inp-t2-cost-in').value = 0.15;
+            document.getElementById('inp-t2-cost-out').value = 0.60;
+
+            document.getElementById('inp-t3-share').value = 30;
+            document.getElementById('inp-t3-cost-in').value = 0.02;
+            document.getElementById('inp-t3-cost-out').value = 0.05;
+
+            document.getElementById('inp-infra-redis').value = 1200;
+            document.getElementById('inp-infra-vectordb').value = 2500;
+            document.getElementById('inp-cost-guardrail-unit').value = 0.10;
+            document.getElementById('inp-infra-evals').value = 1500;
+
+            document.getElementById('inp-hitl-pct').value = 2.5;
+            document.getElementById('inp-hitl-unit-cost').value = 4.50;
+
+            document.getElementById('inp-manual-unit-cost').value = 18.50;
+            document.getElementById('inp-capex').value = 250000;
+
+            calculateModel();
+        }
+
+        function formatUSD(val) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+        }
+
+        function formatDecimal(val, dec = 2) {
+            return new Intl.NumberFormat('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val);
+        }
+
+        function calculateModel() {
+            // Inputs
+            const txVolume = parseFloat(document.getElementById('inp-tx-volume').value) || 0;
+            const agentSteps = parseFloat(document.getElementById('inp-agent-steps').value) || 0;
+            const inputTokensPerStep = parseFloat(document.getElementById('inp-input-tokens').value) || 0;
+            const outputTokensPerStep = parseFloat(document.getElementById('inp-output-tokens').value) || 0;
+
+            const compressionPct = parseFloat(document.getElementById('slider-compression').value) / 100;
+            const cacheHitPct = parseFloat(document.getElementById('slider-cache-hit').value) / 100;
+
+            document.getElementById('lbl-compression-pct').innerText = (compressionPct * 100).toFixed(0) + '%';
+            document.getElementById('lbl-cache-hit-pct').innerText = (cacheHitPct * 100).toFixed(0) + '%';
+
+            // Router Allocations
+            const t1Share = parseFloat(document.getElementById('inp-t1-share').value) / 100;
+            const t1CostIn = parseFloat(document.getElementById('inp-t1-cost-in').value) || 0;
+            const t1CostOut = parseFloat(document.getElementById('inp-t1-cost-out').value) || 0;
+
+            const t2Share = parseFloat(document.getElementById('inp-t2-share').value) / 100;
+            const t2CostIn = parseFloat(document.getElementById('inp-t2-cost-in').value) || 0;
+            const t2CostOut = parseFloat(document.getElementById('inp-t2-cost-out').value) || 0;
+
+            const t3Share = parseFloat(document.getElementById('inp-t3-share').value) / 100;
+            const t3CostIn = parseFloat(document.getElementById('inp-t3-cost-in').value) || 0;
+            const t3CostOut = parseFloat(document.getElementById('inp-t3-cost-out').value) || 0;
+
+            const shareSum = (t1Share + t2Share + t3Share) * 100;
+            document.getElementById('lbl-share-sum').innerText = shareSum.toFixed(0);
+            if (Math.abs(shareSum - 100) > 0.1) {
+                document.getElementById('router-share-warning').classList.remove('hidden');
+            } else {
+                document.getElementById('router-share-warning').classList.add('hidden');
+            }
+
+            // Infrastructure Inputs
+            const redisCost = parseFloat(document.getElementById('inp-infra-redis').value) || 0;
+            const vectorDbCost = parseFloat(document.getElementById('inp-infra-vectordb').value) || 0;
+            const guardrailUnitCost = parseFloat(document.getElementById('inp-cost-guardrail-unit').value) || 0;
+            const evalsCost = parseFloat(document.getElementById('inp-infra-evals').value) || 0;
+
+            const hitlPct = parseFloat(document.getElementById('inp-hitl-pct').value) / 100;
+            const hitlUnitCost = parseFloat(document.getElementById('inp-hitl-unit-cost').value) || 0;
+
+            // ROI Baseline Inputs
+            const manualUnitCost = parseFloat(document.getElementById('inp-manual-unit-cost').value) || 0;
+            const capex = parseFloat(document.getElementById('inp-capex').value) || 0;
+
+            // Step 1: Token Volume Calculations
+            const totalMonthlyRequests = txVolume * agentSteps;
+            const cacheHitRequests = totalMonthlyRequests * cacheHitPct;
+            const llmExecutedRequests = totalMonthlyRequests - cacheHitRequests;
+
+            const uncompressedInputTokensM = (totalMonthlyRequests * inputTokensPerStep) / 1_000_000;
+            const compressedInputTokensM = (llmExecutedRequests * inputTokensPerStep * (1 - compressionPct)) / 1_000_000;
+            const outputTokensM = (llmExecutedRequests * outputTokensPerStep) / 1_000_000;
+
+            // Step 2: Unoptimized Cost (100% Tier 1 Frontier Model, No Compression, No Caching)
+            const unoptimizedInCost = (uncompressedInputTokensM) * t1CostIn;
+            const unoptimizedOutCost = ((totalMonthlyRequests * outputTokensPerStep) / 1_000_000) * t1CostOut;
+            const unoptimizedMonthlyBill = unoptimizedInCost + unoptimizedOutCost;
+
+            // Step 3: Optimized Token Cost across Dynamic Tiers
+            const weightedCostIn = (t1Share * t1CostIn) + (t2Share * t2CostIn) + (t3Share * t3CostIn);
+            const weightedCostOut = (t1Share * t1CostOut) + (t2Share * t2CostOut) + (t3Share * t3CostOut);
+
+            const optimizedMonthlyTokenBill = (compressedInputTokensM * weightedCostIn) + (outputTokensM * weightedCostOut);
+
+            // Step 4: Infrastructure & Guardrails Cost
+            const guardrailsMonthlyCost = (totalMonthlyRequests / 1_000_000) * guardrailUnitCost;
+            const totalMonthlyComputeInfra = redisCost + vectorDbCost;
+            const totalMonthlyOpsEval = evalsCost;
+            const monthlyHitlCost = txVolume * hitlPct * hitlUnitCost;
+
+            const totalMonthlyInfrastructure = totalMonthlyComputeInfra + guardrailsMonthlyCost + totalMonthlyOpsEval + monthlyHitlCost;
+
+            // Step 5: Total Monthly TCO
+            const optimizedMonthlyTCO = optimizedMonthlyTokenBill + totalMonthlyInfrastructure;
+
+            // Step 6: ROI & Manual Baseline
+            const monthlyManualCost = txVolume * manualUnitCost;
+            const netMonthlySavings = monthlyManualCost - optimizedMonthlyTCO;
+            const net3YrSavings = (monthlyManualCost * 36) - (optimizedMonthlyTCO * 36) - capex;
+            const roi3Yr = capex > 0 ? (net3YrSavings / capex) * 100 : 0;
+            const paybackMonths = netMonthlySavings > 0 ? capex / netMonthlySavings : 0;
+            const costReductionPct = unoptimizedMonthlyBill > 0 ? ((unoptimizedMonthlyBill - optimizedMonthlyTCO) / unoptimizedMonthlyBill) * 100 : 0;
+            const unitCostPerAiTx = txVolume > 0 ? optimizedMonthlyTCO / txVolume : 0;
+
+            // Update Top Header Cards
+            document.getElementById('card-unoptimized-monthly').innerText = formatUSD(unoptimizedMonthlyBill);
+            document.getElementById('card-optimized-monthly').innerText = formatUSD(optimizedMonthlyTCO);
+            document.getElementById('card-cost-reduction-pct').innerText = costReductionPct.toFixed(1) + '%';
+            document.getElementById('card-monthly-savings').innerText = `Saves ${formatUSD(netMonthlySavings)} / mo vs manual`;
+            document.getElementById('card-3yr-roi').innerText = roi3Yr.toFixed(0) + '%';
+            document.getElementById('card-payback-months').innerText = `Payback: ${paybackMonths.toFixed(1)} Months`;
+
+            // Update Tab 1 UI Metrics
+            document.getElementById('res-total-requests').innerText = totalMonthlyRequests.toLocaleString();
+            document.getElementById('res-cache-requests').innerText = cacheHitRequests.toLocaleString();
+            document.getElementById('res-uncompressed-tokens').innerText = uncompressedInputTokensM.toFixed(1) + ' M';
+            document.getElementById('res-compressed-tokens').innerText = compressedInputTokensM.toFixed(1) + ' M';
+            document.getElementById('res-unoptimized-bill').innerText = formatUSD(unoptimizedMonthlyBill);
+            document.getElementById('res-optimized-bill').innerText = formatUSD(optimizedMonthlyTokenBill);
+
+            // Update Tab 2 UI Summary
+            document.getElementById('res-tco-tokens').innerText = formatUSD(optimizedMonthlyTokenBill);
+            document.getElementById('res-tco-compute').innerText = formatUSD(totalMonthlyComputeInfra);
+            document.getElementById('res-tco-guardrails').innerText = formatUSD(guardrailsMonthlyCost + evalsCost);
+            document.getElementById('res-tco-hitl').innerText = formatUSD(monthlyHitlCost);
+            document.getElementById('res-tco-total-monthly').innerText = formatUSD(optimizedMonthlyTCO);
+
+            // Update Tab 3 ROI Summary
+            document.getElementById('res-3yr-net-savings').innerText = formatUSD(net3YrSavings);
+            document.getElementById('res-3yr-roi-pct').innerText = roi3Yr.toFixed(1) + '%';
+            document.getElementById('res-payback-months-detail').innerText = paybackMonths.toFixed(1) + ' Months';
+            document.getElementById('res-annual-manual').innerText = formatUSD(monthlyManualCost * 12);
+            document.getElementById('res-annual-ai-tco').innerText = formatUSD(optimizedMonthlyTCO * 12);
+            document.getElementById('res-unit-cost-ai').innerText = '$' + unitCostPerAiTx.toFixed(2);
+
+            // Update Tab 4 Excel Cell Values
+            document.getElementById('cell-val-b4').innerText = txVolume.toLocaleString();
+            document.getElementById('cell-val-b5').innerText = agentSteps.toFixed(1);
+            document.getElementById('cell-val-b6').innerText = totalMonthlyRequests.toLocaleString();
+            document.getElementById('cell-val-b10').innerText = (compressionPct * 100).toFixed(0) + '%';
+            document.getElementById('cell-val-b11').innerText = (cacheHitPct * 100).toFixed(0) + '%';
+            document.getElementById('cell-val-c15').innerText = formatUSD(unoptimizedMonthlyBill);
+            document.getElementById('cell-val-c16').innerText = formatUSD(optimizedMonthlyTokenBill);
+            document.getElementById('cell-val-c22').innerText = formatUSD(totalMonthlyInfrastructure);
+            document.getElementById('cell-val-c25').innerText = formatUSD(optimizedMonthlyTCO);
+            document.getElementById('cell-val-c30').innerText = roi3Yr.toFixed(1) + '%';
+
+            updateCharts(unoptimizedMonthlyBill, optimizedMonthlyTokenBill, totalMonthlyInfrastructure, optimizedMonthlyTCO, monthlyManualCost, capex);
+        }
+
+        function updateCharts(unoptimized, optimizedTokens, infraTotal, optimizedTCO, manualMonthly, capex) {
+            // Chart 1: Token Cost Bar Chart
+            const ctx1 = document.getElementById('chart-token-cost').getContext('2d');
+            if (tokenChart) tokenChart.destroy();
+            tokenChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Unoptimized (100% Tier 1)', 'FinOps Optimized LLM'],
+                    datasets: [{
+                        label: 'Monthly Token Expenditure ($)',
+                        data: [unoptimized, optimizedTokens],
+                        backgroundColor: ['#f87171', '#34d399'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        x: { ticks: { color: '#cbd5e1' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            // Chart 2: TCO Doughnut Breakdown
+            const ctx2 = document.getElementById('chart-tco-doughnut').getContext('2d');
+            if (tcoChart) tcoChart.destroy();
+            tcoChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['LLM Token Expenditure', 'Vector DB & Cache Compute', 'Guardrails & Evals', 'HITL Ops'],
+                    datasets: [{
+                        data: [
+                            optimizedTokens,
+                            parseFloat(document.getElementById('inp-infra-redis').value) + parseFloat(document.getElementById('inp-infra-vectordb').value),
+                            (parseFloat(document.getElementById('res-total-requests').innerText.replace(/,/g, '')) / 1000000 * parseFloat(document.getElementById('inp-cost-guardrail-unit').value)) + parseFloat(document.getElementById('inp-infra-evals').value),
+                            parseFloat(document.getElementById('inp-tx-volume').value) * (parseFloat(document.getElementById('inp-hitl-pct').value)/100) * parseFloat(document.getElementById('inp-hitl-unit-cost').value)
+                        ],
+                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#64748b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1', font: { size: 11 } } } }
+                }
+            });
+
+            // Chart 3: 3-Year Cumulative Cost Comparison Line Chart
+            const ctx3 = document.getElementById('chart-3yr-comparison').getContext('2d');
+            if (comparisonChart) comparisonChart.destroy();
+
+            const months = Array.from({length: 37}, (_, i) => `M${i}`);
+            const manualCumulative = months.map((_, i) => manualMonthly * i);
+            const aiCumulative = months.map((_, i) => capex + (optimizedTCO * i));
+
+            comparisonChart = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        { label: 'Manual Process Baseline', data: manualCumulative, borderColor: '#f87171', borderWidth: 2, pointRadius: 0 },
+                        { label: 'AI Agent Optimized TCO', data: aiCumulative, borderColor: '#34d399', borderWidth: 2, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { color: '#cbd5e1' } } },
+                    scales: {
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        x: { ticks: { color: '#94a3b8', maxTicksLimit: 12 }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function exportToCSV() {
+            const rows = [
+                ["Enterprise AI FinOps & TCO Model Export"],
+                ["Generated Date", new Date().toISOString()],
+                [],
+                ["Parameter", "Value"],
+                ["Monthly Transactions", document.getElementById('inp-tx-volume').value],
+                ["Avg Agent Steps / Tx", document.getElementById('inp-agent-steps').value],
+                ["Avg Input Tokens", document.getElementById('inp-input-tokens').value],
+                ["Avg Output Tokens", document.getElementById('inp-output-tokens').value],
+                ["Prompt Compression %", document.getElementById('slider-compression').value + '%'],
+                ["Cache Hit %", document.getElementById('slider-cache-hit').value + '%'],
+                [],
+                ["Financial Outputs", "Monthly USD", "3-Year Cumulative USD"],
+                ["Unoptimized Baseline LLM Bill", document.getElementById('card-unoptimized-monthly').innerText, ""],
+                ["Optimized Monthly TCO", document.getElementById('card-optimized-monthly').innerText, ""],
+                ["3-Year Net Savings", "", document.getElementById('res-3yr-net-savings').innerText],
+                ["3-Year ROI %", document.getElementById('card-3yr-roi').innerText, ""],
+                ["Payback Period", document.getElementById('card-payback-months').innerText, ""]
+            ];
+
+            let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Enterprise_AI_FinOps_TCO_Model.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            calculateModel();
+        };
+    </script>
+</body>
+</html>

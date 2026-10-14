@@ -1,0 +1,17 @@
+Enterprise AI FinOps & TCO Model Export
+Generated Date,2026-08-12T12:40:54.993Z
+
+Parameter,Value
+Monthly Transactions,1000000
+Avg Agent Steps / Tx,3.5
+Avg Input Tokens,1200
+Avg Output Tokens,300
+Prompt Compression %,30%
+Cache Hit %,35%
+
+Financial Outputs,Monthly USD,3-Year Cumulative USD
+Unoptimized Baseline LLM Bill,$21,000,
+Optimized Monthly TCO,$120,391,
+3-Year Net Savings,,$661,415,937
+3-Year ROI %,264566%,
+Payback Period,Payback: 0.0 Months,
